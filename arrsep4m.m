@@ -158,7 +158,7 @@ if cirbnd > 0
 end
 
 % re-order the new array
-Ind = cmp_arr(arr, sort_arr);
+Ind = arrcmp(arr, sort_arr);
 new_arr = new_arr(Ind);
 
 if flag_row
