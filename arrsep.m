@@ -22,7 +22,7 @@ function new_arr = arrsep(arr, gap, cirbnd, tot)
 % 
 %         [default values]:
 %             cirbnd: inf
-%             tot:    1e-16
+%             tot:    1e-15
 %   ref:
 %       https://www.mathworks.com/help/matlab/matlab_external/c-mex-source-file.html
 %       https://www.mathworks.com/help/matlab/matlab_external/cpp-mex-api.html

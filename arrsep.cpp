@@ -15,21 +15,21 @@
     Usage:
         out = arrsep(in, gap)
         out = arrsep(in, gap, cirbnd)
-        out = arrsep(in, gap, cirbnd, eps)
+        out = arrsep(in, gap, cirbnd, tot)
 
         [input]:
             in:     the input array
             gap:    the minimum distance between adjacent point in the input array
             cirbnd: the circular bound for the array, this is used to measure the "distance" between angles, e.g. the "distance" between -0.49 and 0.49
                     is 0.1 + 0.1 = 0.2 with cirbnd = 0.5
-            eps:    the small value to perform the comparsion between two float/bouble variables
+            tot:    the small value to perform the comparsion between two float/bouble variables
         
         [output]:
             out:    the output array
 
         [default values]:
             cirbnd: inf
-            eps:    1e-9
+            tot:    1e-15
 
 */
 // ref: https://www.mathworks.com/help/matlab/matlab_external/c-mex-source-file.html
@@ -67,7 +67,7 @@ private:
 
    double gap;
    double cirbnd;
-   double thres;
+   double tot;
 
 public:
     void operator()(ArgumentList outputs, ArgumentList inputs)
@@ -89,9 +89,9 @@ public:
             cirbnd = -1;
 
         if (inputs.size() >= 4)
-            thres = inputs[3][0];
+            tot = inputs[3][0];
         else
-            thres = 1e-9;
+            tot = 1e-15;
 
         // the following code seems to have some issue when input is double but get int
         // cirbnd = (inputs.size() >= 3) ? inputs[2][0] : -1;
@@ -154,6 +154,10 @@ public:
                     // calculate the "push distance"
                     double pushL_dst = close_dst * cR / (cR + cL);
                     double pushR_dst = close_dst * cL / (cR + cL);
+
+                    // deal with too small value
+                    if(pushL_dst < tot) pushL_dst = tot;
+                    if(pushR_dst < tot) pushR_dst = tot;
     
                     // push left/right
                     pushL(new_arr, i+1, close_idx, pushL_dst, cL);
@@ -173,6 +177,10 @@ public:
                     // calculate the "push distance"
                     double pushL_dst = close_dst * cR / (cR + cL);
                     double pushR_dst = close_dst * cL / (cR + cL);
+
+                    // deal with too small value
+                    if(pushL_dst < tot) pushL_dst = tot;
+                    if(pushR_dst < tot) pushR_dst = tot;
 
                     // push left/right
                     pushL(new_arr, i+1, i, pushL_dst, cL);      
@@ -243,7 +251,7 @@ public:
         int count_l = 1;
 
         while (idx > 0){
-            if ((arr[idx] - arr[idx-1] - gap) < thres)
+            if ((arr[idx] - arr[idx-1] - gap) < tot)
                 count_l++;
             else
                 return count_l;
@@ -263,7 +271,7 @@ public:
         int count_r = 1;
 
         while (idx < N-1){
-            if ((arr[idx+1] - arr[idx] - gap) < thres)
+            if ((arr[idx+1] - arr[idx] - gap) < tot)
                 count_r++;
             else
                 return count_r;
@@ -277,7 +285,7 @@ public:
         // assume arr is in ascending order
 
         for (int k = 0; k < N-1; k++)
-            if (arr[k+1] - arr[k] < gap - thres){
+            if (arr[k+1] - arr[k] < gap){
                 idx = k;
                 val = arr[k+1] - arr[k];
                 return true;
@@ -298,7 +306,7 @@ public:
         val = arr[N-1] - arr[0];
         val = std::min(val, 2 * cirbnd - val);
 
-        return (val < gap - thres);
+        return (val < gap);
     }
 
     void insertion_sort(std::vector<double>& arr, const int N, const double val)
