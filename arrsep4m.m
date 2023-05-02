@@ -1,4 +1,4 @@
-function new_arr = arrsep4m(arr, gap, cirbnd, thres)
+function new_arr = arrsep4m(arr, gap, cirbnd, tol)
 %ARRSEP4M Seperate the array for every "circular" distance between
 % any two points are greater than gap. Make sure that the input range is
 % [-cirbnd, cirbnd]. If not, the distance between two points may be
@@ -7,8 +7,8 @@ function new_arr = arrsep4m(arr, gap, cirbnd, thres)
 %
 
 %% check input arguments
-if nargin < 3;  cirbnd  = -1;       end
-if nargin < 4;  thres   = 1e-9;     end
+if nargin < 3;  cirbnd  = -1;   end
+if nargin < 4;  tol   = 1e-15;  end
 
 assert(isvector(arr), 'Input must be a 1D array');
 flag_row = ~iscolumn(arr);
@@ -36,28 +36,27 @@ for n = 2 : N
 
     % 1. linear part: find points which are too close
     d_arr   = diff(new_arr);
-    Ind     = find(d_arr < gap - thres);
+    Ind     = find(d_arr < gap);
 
     % 2. circular part: find if the two end points are too close
     if cirbnd > 0
-        flag_cir = (2 * cirbnd - (new_arr(n) - new_arr(1))) < gap - thres;
+        flag_cir = (2*cirbnd - (new_arr(n) - new_arr(1))) < gap;
     else
         flag_cir = 0;
     end
 
     while(~isempty(Ind) || flag_cir) 
-
         if ~isempty(Ind)
             % choose the first gap that is too close
             Ind = Ind(1);
 
             % the "distance" needed to be inserted
             d0 = gap - d_arr(Ind);
-    
+
             % find contiguous left-hand side points
             count_l = 1;
             for idx = Ind - 1 : -1 : 1
-                if (d_arr(idx) - gap) < thres
+                if (d_arr(idx) - gap) < tol
                     count_l = count_l + 1;
                 else
                     break;
@@ -67,7 +66,7 @@ for n = 2 : N
             % find contiguous right-hand side points
             count_r = 1;
             for idx = Ind + 1 : n-1
-                if (d_arr(idx) - gap) < thres
+                if (d_arr(idx) - gap) < tol
                     count_r = count_r + 1;
                 else
                     break;
@@ -77,6 +76,10 @@ for n = 2 : N
             % calculate the "push distance"
             push_l = d0 * count_r / (count_r + count_l);
             push_r = d0 * count_l / (count_r + count_l);
+
+            % deal with small value
+            if push_l < eps(new_arr(Ind));  push_l = eps(new_arr(Ind)); end
+            if push_r < eps(new_arr(Ind));  push_r = eps(new_arr(Ind)); end
 
             % push left
             for c = 1 : count_l
@@ -91,12 +94,12 @@ for n = 2 : N
         else
             
             % the "distance" needed to be inserted
-            d1 = gap - (2 * cirbnd - (new_arr(n) - new_arr(1)));
+            d1 = gap - (2*cirbnd - (new_arr(n) - new_arr(1)));
     
             % find contiguous left-hand side points
             count_l = 1;
             for idx = n-1 : -1 : 1
-                if (d_arr(idx) - gap) < thres
+                if (d_arr(idx) - gap) < tol
                     count_l = count_l + 1;
                 else
                     break;
@@ -106,7 +109,7 @@ for n = 2 : N
             % find contiguous right-hand side points
             count_r = 1;
             for idx = 1 : n-1
-                if (d_arr(idx) - gap) < thres
+                if (d_arr(idx) - gap) < tol
                     count_r = count_r + 1;
                 else
                     break;
@@ -116,6 +119,10 @@ for n = 2 : N
             % calculate the "push distance"
             push_l = d1 * count_r / (count_r + count_l);
             push_r = d1 * count_l / (count_r + count_l);
+
+            % deal with small value
+            if push_l < eps(new_arr(Ind));  push_l = eps(new_arr(Ind)); end
+            if push_r < eps(new_arr(Ind));  push_r = eps(new_arr(Ind)); end
     
             % push left
             for c = 1 : count_l
@@ -132,11 +139,11 @@ for n = 2 : N
         %% update
         % 1. linear part: find points which are too close
         d_arr = diff(new_arr);
-        Ind = find(d_arr < gap - thres);
+        Ind = find(d_arr < gap);
     
         % 2. circular part: find if the two end points are too close
         if cirbnd > 0
-            flag_cir = (2 * cirbnd - (new_arr(n) - new_arr(1))) < gap - thres;
+            flag_cir = (2*cirbnd - (new_arr(n) - new_arr(1))) < gap;
         else
             flag_cir = 0;
         end
@@ -144,21 +151,21 @@ for n = 2 : N
 
 end
 
-% if cirbnd > 0, deal with the circular boundary
+% if cirbnd is positive, deal with the circular boundary
 if cirbnd > 0
     for n = 1 : N
         if new_arr(n) < -cirbnd
-            new_arr(n) = new_arr(n) + 2 * cirbnd;
+            new_arr(n) = new_arr(n) + 2*cirbnd;
         end
         
         if new_arr(n) > cirbnd
-            new_arr(n) = new_arr(n) - 2 * cirbnd;
+            new_arr(n) = new_arr(n) - 2*cirbnd;
         end
     end
 end
 
 % re-order the new array
-Ind = arrcmp(arr, sort_arr);
+Ind     = arrcmp(arr, sort_arr);
 new_arr = new_arr(Ind);
 
 if flag_row
