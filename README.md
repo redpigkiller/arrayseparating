@@ -232,8 +232,6 @@ The Karush-Kuhn-Tucker (KKT) conditions:
 
 The strong duality holds when the inequality constraints are convex, the equality constraints are affine, and the $\bf{a}$ and $(\lambda, \nu)$ satisfy the KKT conditions.
 
----
-
 From the KKT conditions, we have
 
 $$
@@ -255,7 +253,7 @@ a_n &=& \frac{1}{2}\lambda_{n-1}
 \end{matrix}.
 $$
 
-By the above equations, we can let $\lambda_i$ be the distance that we want the i-th gap to grow. Note that it is not the true or final distance that the gap grows. For example, to enlarge the first gap (between $x_1$ and $x_2$) by $\lambda_1$, the adjustment for $x_1$ and $x_2$ are $-\frac{1}{2}\lambda_1$ and $\frac{1}{2}\lambda_1$, respectively. Also, in order to enlarge the second gap (between $x_2$ and $x_3$) by $\lambda_2$, the adjustment for $x_2$ is $-\frac{1}{2}\lambda_2$, that is why we have $a_2 = \frac{1}{2}(\lambda_1-\lambda_2)$.
+By the above equations, we can let $\lambda_i$ be the distance that we want the i-th gap to grow. Note that it is not the true or final distance that the gap grows. For example, to enlarge the first gap (between $x_1$ and $x_2$) by $\lambda_1$, the adjustments for $x_1$ and $x_2$ are $-\frac{1}{2}\lambda_1$ and $\frac{1}{2}\lambda_1$, respectively. Also, in order to enlarge the second gap (between $x_2$ and $x_3$) by $\lambda_2$, the adjustment for $x_2$ is $-\frac{1}{2}\lambda_2$, that is why we have $a_2 = \frac{1}{2}(\lambda_1-\lambda_2)$.
 
 Then, we have the following conditions of complementary slackness:
 
@@ -272,3 +270,50 @@ $$
 $$
 
 Therefore, we can either enlarge the i-th gap by $\lambda_i$ and make sure the resulting gap is $0$, or do not enlarge the i-th gap ($\lambda_i=0$).
+
+---
+
+Finally, we need to find if the adjustment in the first section can be represented by the parameters in the second section.
+
+Let $x=[0, 2, 3, 3.5]$ and $\delta=2$, then after some steps, we have
+
+1. $y=[0, 2, 3.5]$ 
+    
+    ```jsx
+         x_1         x_2  x_3 x_4
+         y_1         y_2      y_3
+    ------X-----------X-----X--X----->
+          0     1     2     3 3.5
+    ```
+    
+    For the partial optimization problem (only consider points in $\mathbf{y}$), the algorithm finds that the distance between $y_2$ and $y_3$ is too close. Since the distance between $y_1$ and $y_2$ is equal to $\delta$, these two points need to be adjusted simultaneously.
+    
+    The distance needed to be insert is $\delta-(y_3-y_2)=0.5$, hence
+    
+    - push $y_1$ and $y_2$ to the left by $\frac{1}{3}*0.5=\frac{1}{6}$ ⇒ $a_1=a_2=-\frac{1}{6}$
+    - push $y_3$ to the right by $\frac{2}{3}*0.5=\frac{2}{6}$ ⇒ $a_4=\frac{2}{6}$
+    - $x_3$ does not be considered in $\mathbf{y}$ ⇒ $a_3=0$
+    
+    Then, we need to compare the parameters for the original optimization problem (consider points in $\mathbf{x}$) to this:
+    
+    - $a_1=-\frac{1}{2}\lambda_1$
+    - $a_2=\frac{1}{2}(\lambda_1-\lambda_2)$
+    - $a_3=\frac{1}{2}(\lambda_2-\lambda_3)$
+    - $a_4=\frac{1}{2}\lambda_3$
+    
+    In the partial optimization problem (only consider points in $\mathbf{y}$), the adjustment of $x_3$ does not exist, therefore $\lambda_2=\lambda_3$. Then, we now have
+    
+    - $a_1=-\frac{1}{2}\lambda_1$
+    - $a_2=\frac{1}{2}(\lambda_1-\lambda_2)$
+    - $a_3=0$
+    - $a_4=\frac{1}{2}\lambda_2$
+    
+    Therefore, we can set $2\lambda_1=\lambda_2=\frac{2}{3}$ to achieve the adjustments in algorithm. In fact, the adjustments in algorithm can be represented by the parameters $\lambda_i$, which means the overall adjustments will satisfy the last condition of the KKT conditions. In addition, the primal and dual feasibility ($\lambda_i>0$) are also satisfied.
+    
+2. Consider the condition of complementary slackness. We can know that the in end of the algorithm, all the distance between any two adjacent points are greater than or equal to $\delta$.
+    1. For $(x_{i+1}+a_{i+1})-(x_i+a_i)=\delta$, it clearly satisfies the equation $\lambda_i\left(\delta-(x_{i+1}-x_i)-(a_{i+1}-a_i)\right)=0$.
+    2. For $(x_{i+1}+a_{i+1})-(x_i+a_i)>\delta$, the step in algorithm does not try to enlarge the distance between two adjacent points that their distance is greater than $\delta$, and hence, $\lambda_i=0$. Therefore, it also satisfies the equation $\lambda_i\left(\delta-(x_{i+1}-x_i)-(a_{i+1}-a_i)\right)=0$.
+
+---
+
+All in all, the algorithm will move the points that satisfies the last condition of the KKT conditions, and eventually satisfies the primal feasibility and the condition of complementary slackness. The dual feasibility is satisfied by the nature of the distance of movement is non-negative. All the above content is just for explanation rather than a rigorous proof. Since any formal proof is not done, the algorithm may be wrong in some unknown conditions.
